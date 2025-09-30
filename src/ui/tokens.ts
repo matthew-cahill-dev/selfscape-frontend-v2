@@ -1,3 +1,5 @@
+// selfscape-frontend-v2/src/ui/tokens.ts
+
 // Zeplin tokens from your snippets/screenshot
 export const colors = {
   pageBg: "#0B0F14",

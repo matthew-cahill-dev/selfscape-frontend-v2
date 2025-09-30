@@ -1,3 +1,4 @@
+// selfscape-frontend-v2/src/app/page.tsx
 import IntroText from "@/components/IntroText";
 import JournalCard from "@/components/JournalCard";
 import VoiceCard from "@/components/VoiceCard";
@@ -10,15 +11,15 @@ export default function Page() {
       <main
         className="w-[420px] flex flex-col"
         style={{
-          padding: `${spacing.pageTop}px ${spacing.pageX}px ${spacing.pageBottom}px`,
+          padding: `${spacing.pageTop}px ${spacing.pageX}px calc(${spacing.pageBottom}px + env(safe-area-inset-bottom))`,
           gap: spacing.gap,
         }}
       >
         <IntroText />
         <JournalCard />
         <VoiceCard />
-        <TabBar />
       </main>
+      <TabBar />
     </div>
   );
 }

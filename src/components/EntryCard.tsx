@@ -1,4 +1,6 @@
-import type { Entry } from "@/lib/api";
+// selfscape-frontend-v2/src/components/EntryCard.tsx
+
+import type { Entry } from "@/types";  // ✅ pull from types.ts
 
 export default function EntryCard({ e }: { e: Entry }) {
   return (
@@ -8,11 +10,11 @@ export default function EntryCard({ e }: { e: Entry }) {
           {e.timestamp ? new Date(e.timestamp).toLocaleString() : "—"}
         </time>
         <span className="text-[12px] leading-[18px] rounded-badge bg-border px-2 py-[2px]">
-          {e.summary?.emotion ?? e.summary?.overallTone ?? "—"}
+          {e.emotion ?? e.overall_tone ?? "—"}
         </span>
       </div>
       <p className="mt-3 text-[14px] leading-[22px] opacity-95">
-        {e.text ?? e.summary?.insight ?? ""}
+        {e.text ?? e.insight ?? ""}
       </p>
     </article>
   );

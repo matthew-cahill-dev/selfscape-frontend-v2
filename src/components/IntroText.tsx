@@ -1,3 +1,5 @@
+// selfscape-frontend-v2/src/components/IntroText.tsx
+
 import { colors, type } from "@/ui/tokens";
 
 export default function IntroText() {

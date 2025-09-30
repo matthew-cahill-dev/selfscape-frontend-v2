@@ -1,3 +1,5 @@
+// selfscape-frontend-v2/src/components/NewEntryForm.tsx
+
 "use client";
 
 import { useState } from "react";

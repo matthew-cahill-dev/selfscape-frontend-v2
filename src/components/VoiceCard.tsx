@@ -1,10 +1,15 @@
+// selfscape-frontend-v2/src/components/VoiceCard.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSession, signIn } from "next-auth/react";
 import { colors, radii, shadows, type } from "@/ui/tokens";
 import { createEntry, transcribeAudio } from "@/lib/api";
 
 export default function VoiceCard() {
+  const { data: session, status } = useSession();
+  const email = session?.user?.email ?? null;
+
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
 
@@ -12,9 +17,7 @@ export default function VoiceCard() {
   const chunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  // TODO: replace with the logged-in email
-  const email = "you@selfscape.app";
-
+  // timer
   useEffect(() => {
     if (!recording) return;
     timerRef.current = window.setInterval(() => setSeconds((s) => s + 1), 1000) as any;
@@ -25,6 +28,15 @@ export default function VoiceCard() {
   }, [recording]);
 
   async function startRecording() {
+    if (!email) {
+      signIn("google");
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert("Audio recording is not supported in this browser.");
+      return;
+    }
+
     setSeconds(0);
     chunksRef.current = [];
 
@@ -62,12 +74,16 @@ export default function VoiceCard() {
     try {
       // 1) Transcribe server-side
       const { transcript } = await transcribeAudio(blob);
+      const content = (transcript || "").trim();
+      if (!content) {
+        alert("No speech detected.");
+        return;
+      }
 
-      // 2) Save as a text entry (ties into your /entry/ summarization + embedding)
-      await createEntry({ user_email: email, text: (transcript || "").trim() });
+      // 2) Save as a text entry (ties into /entry/ summarization + embedding)
+      await createEntry({ user_email: email!, text: content });
 
       // notify & reset
-      alert("Saved!");
       setSeconds(0);
       window.dispatchEvent(new CustomEvent("entries:refresh"));
     } catch (e: any) {
@@ -79,6 +95,8 @@ export default function VoiceCard() {
     if (!recording) startRecording();
     else stopAndSave();
   }
+
+  const disabled = status === "loading" || !email;
 
   return (
     <section
@@ -130,7 +148,7 @@ export default function VoiceCard() {
           className="mt-4 font-semibold"
           style={{ color: colors.subText, fontSize: type.fine.size, lineHeight: `${type.fine.line}px` }}
         >
-          Speaking time detected: {seconds}s
+          {disabled ? "Sign in to record" : `Speaking time detected: ${seconds}s`}
         </p>
       </div>
 
@@ -138,7 +156,8 @@ export default function VoiceCard() {
       <div className="w-full flex justify-center mt-4">
         <button
           onClick={onClickRecord}
-          className="w-[350px] text-white font-semibold"
+          disabled={disabled}
+          className="w-[350px] text-white font-semibold disabled:opacity-60"
           style={{
             padding: "13px 15px",
             borderRadius: radii.pill,
@@ -148,11 +167,11 @@ export default function VoiceCard() {
             lineHeight: `${type.btn.line}px`,
           }}
         >
-          {recording ? "Stop & Save" : "Record"}
+          {recording ? "Stop & Save" : disabled ? "Sign in to record" : "Record"}
         </button>
       </div>
 
-      {/* Redo / Preview (text-only; wire later if needed) */}
+      {/* Redo / Preview (placeholders) */}
       <div className="w-full grid grid-cols-2 gap-3 mt-3">
         <BtnOutline label="Redo" />
         <BtnOutline label="Preview" />

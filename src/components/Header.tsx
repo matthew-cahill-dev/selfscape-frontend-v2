@@ -1,3 +1,5 @@
+// selfscape-frontend-v2/src/components/Header.tsx
+
 export default function Header() {
   return (
     <header className="sticky top-0 z-20 border-b border-border/80 bg-bg/80 backdrop-blur">

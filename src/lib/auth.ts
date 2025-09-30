@@ -1,3 +1,5 @@
+// selfscape-frontend-v2/src/lib/auth.ts
+
 // Placeholder for when you add NextAuth/Supabase auth.
 // Example usage later:
 // import { getServerSession } from "next-auth";

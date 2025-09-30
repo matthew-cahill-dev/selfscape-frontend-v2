@@ -1,12 +1,30 @@
-// src/lib/api.ts
-const API = process.env.NEXT_PUBLIC_API_URL!; // e.g. https://selfscape-backend.onrender.com
+// selfscape-frontend-v2/src/lib/api.ts
+const API = process.env.NEXT_PUBLIC_API_URL!; // e.g., https://selfscape-backend.onrender.com
 
-// If/when you add NextAuth JWT-protected routes, populate this.
-async function authHeaders() {
-  // const token = await getTokenSomehow();
-  // return token ? { Authorization: `Bearer ${token}` } : {};
-  return {};
+let cachedToken: string | null | undefined; // undefined = not fetched yet
+
+async function fetchToken(): Promise<string | null> {
+  if (cachedToken !== undefined) return cachedToken ?? null;
+  try {
+    const res = await fetch("/api/token", { method: "GET", cache: "no-store" });
+    if (!res.ok) throw new Error("token fetch failed");
+    const { token } = (await res.json()) as { token: string | null };
+    cachedToken = token ?? null;
+    return cachedToken;
+  } catch {
+    cachedToken = null;
+    return null;
+  }
 }
+
+// Always return a Record<string, string> so it's valid HeadersInit
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = await fetchToken();
+  if (token) return { Authorization: `Bearer ${token}` };
+  return {}; // still a Record<string, string>
+}
+
+// ---------- API calls ----------
 
 export async function createEntry(params: { user_email: string; text: string }) {
   const res = await fetch(`${API}/entry/`, {
@@ -17,7 +35,10 @@ export async function createEntry(params: { user_email: string; text: string }) 
     },
     body: JSON.stringify({ text: params.text, user_email: params.user_email }),
   });
-  if (!res.ok) throw new Error(`POST /entry/ ${res.status}`);
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`POST /entry/ ${res.status} ${t}`);
+  }
   return res.json();
 }
 
@@ -28,7 +49,8 @@ export async function listEntries(user_email: string, limit = 10, sort: "asc" | 
   url.searchParams.set("sort", sort);
   const res = await fetch(url.toString(), {
     method: "GET",
-    headers: { ...(await authHeaders()) },
+    headers: await authHeaders(),
+    cache: "no-store",
   });
   if (!res.ok) throw new Error(`GET /entries/ ${res.status}`);
   return res.json();
@@ -39,6 +61,7 @@ export async function transcribeAudio(file: Blob) {
   fd.append("audio", file, "recording.webm"); // backend expects field name "audio"
   const res = await fetch(`${API}/transcribe`, {
     method: "POST",
+    // No Content-Type here; browser sets multipart boundary
     body: fd,
   });
   if (!res.ok) throw new Error(`POST /transcribe ${res.status}`);

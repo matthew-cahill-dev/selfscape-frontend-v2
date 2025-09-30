@@ -1,4 +1,4 @@
-// src/types.ts
+// selfscape-frontend-v2/src/types.ts
 export type Entry = {
   id: string;
   text?: string;            // backend uses "text"

@@ -1,6 +1,8 @@
+// selfscape-frontend-v2/src/app/timeline/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import TimelineEntryCard from "@/components/TimelineEntryCard";
 import TabBar from "@/components/TabBar";
 import { spacing, colors } from "@/ui/tokens";
@@ -23,6 +25,7 @@ export default function TimelinePage() {
   const [items, setItems] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     async function run() {
@@ -75,7 +78,14 @@ export default function TimelinePage() {
       </main>
 
       <TabBar />
-      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} email={email} />
+
+      {/* Pass a handler to ensure navigation even if SearchDialog fallback changes */}
+      <SearchDialog
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        email={email}
+        onSelectEntry={(e) => router.push(`/entry/${e.id}`)}
+      />
     </div>
   );
 }
@@ -103,7 +113,6 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
           aria-label="Search"
           onClick={onOpenSearch}
           className="hover:opacity-80 mr-[8px] relative flex items-center justify-center w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm -translate-y-[6px]"
-          // OR use: style={{ top: '1px' }} with "relative" instead of translate
         >
           <span className="text-[16px] leading-none">🔍</span>
         </button>

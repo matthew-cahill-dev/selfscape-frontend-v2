@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { searchEntries } from "@/lib/api";
 import { colors } from "@/ui/tokens";
 
@@ -30,6 +31,7 @@ export default function SearchDialog({
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<Entry[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (open) {
@@ -59,16 +61,29 @@ export default function SearchDialog({
     }
   }
 
+  function handlePick(entry: Entry) {
+    // Prefer parent handler if provided; otherwise push to detail route.
+    if (onSelectEntry) onSelectEntry(entry);
+    else router.push(`/entry/${entry.id}`);
+    onClose();
+  }
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[60]">
       {/* dimmer */}
-      <button aria-label="Close search" onClick={onClose} className="absolute inset-0 bg-black/30" />
+      <button
+        aria-label="Close search"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/30"
+      />
       {/* panel */}
       <div
         className="absolute left-1/2 top-10 w-[420px] -translate-x-1/2 rounded-2xl border bg-white p-3 shadow-xl"
         style={{ borderColor: "rgba(18,18,36,0.06)" }}
+        role="dialog"
+        aria-modal="true"
       >
         <form onSubmit={runSearch} className="flex items-center gap-2">
           <span className="text-xl">🔍</span>
@@ -79,7 +94,7 @@ export default function SearchDialog({
             onChange={(e) => setQ(e.target.value)}
             placeholder={email ? "Search your journal…" : "Sign in to search"}
             disabled={!email}
-            className="flex-1 outline-none bg-transparent text-[15px] placeholder:text-[#8a8ba0]"
+            className="flex-1 outline-none bg-transparent text-[15px] placeholder:text-[#8a8ba0] text-[#121224]"
           />
           <button
             type="submit"
@@ -109,11 +124,9 @@ export default function SearchDialog({
             return (
               <button
                 key={r.id}
-                onClick={() => {
-                  onSelectEntry?.(r);
-                  onClose();
-                }}
-                className="w-full text-left rounded-xl border mb-2 p-3 hover:bg-[#f7f7fb]"
+                type="button"
+                onClick={() => handlePick(r)}
+                className="w-full text-left rounded-xl border mb-2 p-3 hover:bg-[#f7f7fb] focus:outline-none focus:ring-2 focus:ring-[#cfcfe8]"
                 style={{ borderColor: "rgba(18,18,36,0.06)" }}
               >
                 <div className="text-xs text-[#8a8ba0]">{when}</div>

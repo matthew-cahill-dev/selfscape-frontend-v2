@@ -7,7 +7,9 @@ import { createEntry } from "@/lib/api";
 export default function JournalCard() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const email = "you@selfscape.app"; // TODO: replace with session email
+
+  // TODO: replace this with the signed-in user's email (NextAuth)
+  const email = "you@selfscape.app";
 
   async function onSave() {
     if (!text.trim()) return;
@@ -15,9 +17,10 @@ export default function JournalCard() {
     try {
       await createEntry({ user_email: email, text: text.trim() });
       setText("");
+      // let other parts of the UI refresh (timeline, etc.)
       window.dispatchEvent(new CustomEvent("entries:refresh"));
     } catch (e: any) {
-      alert(e.message ?? "Save failed");
+      alert(e?.message ?? "Save failed");
     } finally {
       setBusy(false);
     }
@@ -32,7 +35,7 @@ export default function JournalCard() {
         border: `1px solid ${colors.border06}`,
       }}
     >
-      {/* textarea area — padding 17/17/111, radius 24 */}
+      {/* textarea area — padding 17/17/111 */}
       <div className="p-[17px] pb-[111px]" style={{ borderRadius: radii.card }}>
         <div
           className="rounded-[16px] border p-4"
@@ -66,7 +69,7 @@ export default function JournalCard() {
         </button>
       </div>
 
-      {/* Undo / Clear (text-only) */}
+      {/* Undo / Clear (text-only buttons) */}
       <div className="px-4 pb-4 grid grid-cols-2 gap-3">
         <BtnOutline label="Undo" onClick={() => setText("")} />
         <BtnOutline label="Clear" onClick={() => setText("")} />

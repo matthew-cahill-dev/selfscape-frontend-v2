@@ -1,28 +1,83 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { colors, radii, shadows, type } from "@/ui/tokens";
+import { createEntry, transcribeAudio } from "@/lib/api";
 
 export default function VoiceCard() {
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
 
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const timerRef = useRef<number | null>(null);
+
+  // TODO: replace with the logged-in email
+  const email = "you@selfscape.app";
+
   useEffect(() => {
     if (!recording) return;
-    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => clearInterval(id);
+    timerRef.current = window.setInterval(() => setSeconds((s) => s + 1), 1000) as any;
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
   }, [recording]);
 
-  function toggleRecording() {
-    if (!recording) {
-      setSeconds(0);
-      setRecording(true);
-      // TODO: start MediaRecorder & audio stream here
-    } else {
-      setRecording(false);
-      // TODO: stop recorder and upload to backend
-      alert("Audio stopped & saved (wire to backend)");
+  async function startRecording() {
+    setSeconds(0);
+    chunksRef.current = [];
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : "audio/webm";
+    const mr = new MediaRecorder(stream, { mimeType: mime });
+    mediaRecorderRef.current = mr;
+
+    mr.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    mr.start(250); // small chunks for responsiveness
+    setRecording(true);
+  }
+
+  async function stopAndSave() {
+    const mr = mediaRecorderRef.current;
+    if (!mr) return;
+
+    const stopped: Promise<void> = new Promise((resolve) => {
+      mr.onstop = () => resolve();
+    });
+    mr.stop();
+    setRecording(false);
+    await stopped;
+
+    const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+    if (!blob.size) {
+      alert("No audio captured");
+      return;
     }
+
+    try {
+      // 1) Transcribe server-side
+      const { transcript } = await transcribeAudio(blob);
+
+      // 2) Save as a text entry (ties into your /entry/ summarization + embedding)
+      await createEntry({ user_email: email, text: (transcript || "").trim() });
+
+      // notify & reset
+      alert("Saved!");
+      setSeconds(0);
+      window.dispatchEvent(new CustomEvent("entries:refresh"));
+    } catch (e: any) {
+      alert(e?.message ?? "Audio save failed");
+    }
+  }
+
+  function onClickRecord() {
+    if (!recording) startRecording();
+    else stopAndSave();
   }
 
   return (
@@ -35,7 +90,7 @@ export default function VoiceCard() {
         border: `1px solid ${colors.border06}`,
       }}
     >
-      {/* Aura + mic */}
+      {/* Aura */}
       <div className="w-full flex flex-col items-center">
         <div className="relative flex items-center justify-center">
           <div
@@ -67,7 +122,6 @@ export default function VoiceCard() {
                 opacity: 0.22,
               }}
             />
-            {/* mic glyph substitute */}
             <div className="absolute w-[26px] h-[26px] border-[2.2px] border-white rounded-md" />
           </div>
         </div>
@@ -83,7 +137,7 @@ export default function VoiceCard() {
       {/* Record / Stop & Save */}
       <div className="w-full flex justify-center mt-4">
         <button
-          onClick={toggleRecording}
+          onClick={onClickRecord}
           className="w-[350px] text-white font-semibold"
           style={{
             padding: "13px 15px",
@@ -98,7 +152,7 @@ export default function VoiceCard() {
         </button>
       </div>
 
-      {/* Redo / Preview (text-only) */}
+      {/* Redo / Preview (text-only; wire later if needed) */}
       <div className="w-full grid grid-cols-2 gap-3 mt-3">
         <BtnOutline label="Redo" />
         <BtnOutline label="Preview" />

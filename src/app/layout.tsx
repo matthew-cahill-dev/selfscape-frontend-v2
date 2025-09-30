@@ -3,6 +3,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import Providers from "./providers";
+import GlobalMenu from "@/components/GlobalMenu";
 
 export const metadata: Metadata = {
   title: "Selfscape",
@@ -14,9 +15,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <Providers>{children}</Providers>
+        {/* Global hamburger + right drawer available on EVERY page */}
+        <GlobalMenu />
       </body>
     </html>
   );
 }
-
-

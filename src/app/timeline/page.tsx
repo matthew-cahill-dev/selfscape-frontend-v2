@@ -1,4 +1,3 @@
-// selfscape-frontend-v2/src/app/timeline/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -7,6 +6,7 @@ import TabBar from "@/components/TabBar";
 import { spacing, colors } from "@/ui/tokens";
 import { listEntries } from "@/lib/api";
 import { useUserEmail } from "@/hooks/useUserEmail";
+import SearchDialog from "@/components/SearchDialog";
 
 type Entry = {
   id: string;
@@ -22,6 +22,7 @@ export default function TimelinePage() {
   const email = useUserEmail();
   const [items, setItems] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     async function run() {
@@ -41,7 +42,6 @@ export default function TimelinePage() {
     return () => window.removeEventListener("entries:refresh", onRefresh);
   }, [email]);
 
-  // Group by "Month YYYY"
   const groups = useMemo(() => groupByMonth(items), [items]);
 
   return (
@@ -53,7 +53,7 @@ export default function TimelinePage() {
           gap: 12,
         }}
       >
-        <Header />
+        <Header onOpenSearch={() => setSearchOpen(true)} />
         <ChipsRow />
 
         {loading ? (
@@ -73,12 +73,14 @@ export default function TimelinePage() {
           ))
         )}
       </main>
+
       <TabBar />
+      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} email={email} />
     </div>
   );
 }
 
-function Header() {
+function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
   return (
     <div
       className="flex items-center justify-between"
@@ -91,13 +93,20 @@ function Header() {
         >
           Timeline
         </span>
-        <p className="text-xs font-semibold text-[#8a8ba0]">
-          Only you can see this.
-        </p>
+        <p className="text-xs font-semibold text-[#8a8ba0]">Only you can see this.</p>
       </div>
-      <div className="flex gap-3 text-[#8a8ba0] text-xl">
-        <span>🔍</span>
-        <span>⚙️</span>
+
+      {/* Reserve space on the RIGHT for the floating GlobalMenu (24px) + some gap */}
+      <div className="relative flex items-center text-[#8a8ba0] pr-[20px]">
+        {/* SEARCH: fixed 24x24 box so it matches the menu button; nudge vertically with translate/top */}
+        <button
+          aria-label="Search"
+          onClick={onOpenSearch}
+          className="hover:opacity-80 mr-[8px] relative flex items-center justify-center w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm -translate-y-[6px]"
+          // OR use: style={{ top: '1px' }} with "relative" instead of translate
+        >
+          <span className="text-[16px] leading-none">🔍</span>
+        </button>
       </div>
     </div>
   );
@@ -122,16 +131,8 @@ function ChipsRow() {
 
 function DividerHeader({ label }: { label: string }) {
   return (
-    <div
-      className="sticky top-0 z-10 bg-[rgba(254,254,255,0.9)] backdrop-blur-sm"
-      style={{ width: 388, padding: "6px 0 7px", marginBottom: 10 }}
-    >
-      <span
-        className="font-semibold underline"
-        style={{ fontSize: 13, color: "#8a8ba0" }}
-      >
-        {label}
-      </span>
+    <div className="sticky top-[8px] z-10 bg-transparent">
+      <h3 className="text-[13px] font-semibold text-[#8a8ba0] underline">{label}</h3>
     </div>
   );
 }
@@ -142,8 +143,7 @@ function groupByMonth(entries: Entry[]) {
   for (const e of entries) {
     const d = new Date(e.timestamp);
     const key = d.toLocaleString(undefined, { month: "long", year: "numeric" });
-    map[key] ||= { entries: [] };
-    map[key].entries.push(e);
+    (map[key] ||= { entries: [] }).entries.push(e);
   }
   return map;
 }

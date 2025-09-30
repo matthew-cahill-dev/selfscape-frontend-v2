@@ -1,4 +1,5 @@
 // selfscape-frontend-v2/src/lib/api.ts
+
 const API = process.env.NEXT_PUBLIC_API_URL!; // e.g., https://selfscape-backend.onrender.com
 
 let cachedToken: string | null | undefined; // undefined = not fetched yet
@@ -21,7 +22,7 @@ async function fetchToken(): Promise<string | null> {
 async function authHeaders(): Promise<Record<string, string>> {
   const token = await fetchToken();
   if (token) return { Authorization: `Bearer ${token}` };
-  return {}; // still a Record<string, string>
+  return {};
 }
 
 // ---------- API calls ----------
@@ -56,13 +57,28 @@ export async function listEntries(user_email: string, limit = 10, sort: "asc" | 
   return res.json();
 }
 
+export async function searchEntries(user_email: string, query: string) {
+  const res = await fetch(`${API}/search/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(await authHeaders()),
+    },
+    body: JSON.stringify({ user_email, query }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`POST /search/ ${res.status} ${t}`);
+  }
+  return res.json() as Promise<{ entries: any[] }>;
+}
+
 export async function transcribeAudio(file: Blob) {
   const fd = new FormData();
   fd.append("audio", file, "recording.webm"); // backend expects field name "audio"
   const res = await fetch(`${API}/transcribe`, {
     method: "POST",
-    // No Content-Type here; browser sets multipart boundary
-    body: fd,
+    body: fd, // browser sets boundary for multipart
   });
   if (!res.ok) throw new Error(`POST /transcribe ${res.status}`);
   return res.json() as Promise<{ transcript: string }>;

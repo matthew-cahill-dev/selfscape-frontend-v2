@@ -1,14 +1,21 @@
 // selfscape-frontend-v2/src/ui/tokens.ts
 
-// Zeplin tokens from your snippets/screenshot
+// Zeplin tokens + updated periwinkle-purple gradient background
 export const colors = {
-  pageBg: "#0B0F14",
-  text: "#ffffff",
+  pageBg: "linear-gradient(135deg, #b8c7ff 0%, #d6ccff 100%)", 
+  // slightly deeper purple tones:
+  // #b8c7ff = periwinkle with a purple bias
+  // #d6ccff = soft lavender-purple
+
+  text: "#0B0F14", // dark text for contrast
   subText: "#8a8ba0",
   white: "#ffffff",
   purple: "#6e56cf",
   border06: "rgba(18,18,36,0.06)", // #121224 @ 6%
   tabBg: "#f7f7fb",
+
+  // solid fallback if you need a single color
+  periwinklePurple: "#b8c7ff",
 };
 
 export const radii = {

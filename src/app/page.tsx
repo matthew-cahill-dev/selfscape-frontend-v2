@@ -1,4 +1,5 @@
 // selfscape-frontend-v2/src/app/page.tsx
+
 import IntroText from "@/components/IntroText";
 import JournalCard from "@/components/JournalCard";
 import VoiceCard from "@/components/VoiceCard";
@@ -7,7 +8,12 @@ import { colors, spacing } from "@/ui/tokens";
 
 export default function Page() {
   return (
-    <div className="min-h-screen flex justify-center" style={{ background: colors.pageBg }}>
+    <div
+      className="min-h-screen flex justify-center"
+      style={{
+        background: colors.pageBg, // 🔹 Reusable gradient token
+      }}
+    >
       <main
         className="w-[420px] flex flex-col"
         style={{

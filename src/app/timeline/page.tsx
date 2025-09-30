@@ -64,9 +64,10 @@ export default function TimelinePage() {
           Object.entries(groups).map(([monthLabel, group]) => (
             <section key={monthLabel} className="mt-[6px]">
               <DividerHeader label={monthLabel} />
-              {group.hasToday && <TodayTag />}
               <div className="flex flex-col gap-[12px] mt-[10px]">
-                {group.entries.map((e) => <TimelineEntryCard key={e.id} entry={e} />)}
+                {group.entries.map((e) => (
+                  <TimelineEntryCard key={e.id} entry={e} />
+                ))}
               </div>
             </section>
           ))
@@ -79,19 +80,34 @@ export default function TimelinePage() {
 
 function Header() {
   return (
-    <div className="flex items-center justify-between" style={{ height: 36, alignSelf: "stretch" }}>
+    <div
+      className="flex items-center justify-between"
+      style={{ height: 36, alignSelf: "stretch" }}
+    >
       <div>
-        <span className="font-semibold" style={{ fontSize: 16, lineHeight: "20px", color: "#121224" }}>Timeline</span>
-        <p className="text-xs font-semibold text-[#8a8ba0]">Only you can see this.</p>
+        <span
+          className="font-semibold"
+          style={{ fontSize: 16, lineHeight: "20px", color: "#121224" }}
+        >
+          Timeline
+        </span>
+        <p className="text-xs font-semibold text-[#8a8ba0]">
+          Only you can see this.
+        </p>
       </div>
-      <div className="flex gap-3 text-[#8a8ba0] text-xl"><span>🔍</span><span>⚙️</span></div>
+      <div className="flex gap-3 text-[#8a8ba0] text-xl">
+        <span>🔍</span>
+        <span>⚙️</span>
+      </div>
     </div>
   );
 }
 
 function ChipsRow() {
   const Chip = ({ label }: { label: string }) => (
-    <div className="px-3 py-1 rounded-full border border-[#1212240f] bg-white text-sm font-medium text-[#333245]">{label}</div>
+    <div className="px-3 py-1 rounded-full border border-[#1212240f] bg-white text-sm font-medium text-[#333245]">
+      {label}
+    </div>
   );
   return (
     <div className="flex gap-2 flex-wrap">
@@ -106,28 +122,28 @@ function ChipsRow() {
 
 function DividerHeader({ label }: { label: string }) {
   return (
-    <div className="flex flex-col" style={{ width: 388, padding: "6px 0 7px", borderBottom: "1px solid rgba(18,18,36,0.06)", background: "#FEFEFF", marginBottom: 10 }}>
-      <span className="font-semibold" style={{ fontSize: 13, color: "#8a8ba0", height: 16 }}>{label}</span>
+    <div
+      className="sticky top-0 z-10 bg-[rgba(254,254,255,0.9)] backdrop-blur-sm"
+      style={{ width: 388, padding: "6px 0 7px", marginBottom: 10 }}
+    >
+      <span
+        className="font-semibold underline"
+        style={{ fontSize: 13, color: "#8a8ba0" }}
+      >
+        {label}
+      </span>
     </div>
   );
-}
-function TodayTag() {
-  return <div className="mt-2 mb-1 text-center text-xs font-semibold text-[#8a8ba0]">Today</div>;
 }
 
 /* helpers */
 function groupByMonth(entries: Entry[]) {
-  const map: Record<string, { entries: Entry[]; hasToday: boolean }> = {};
-  const today = dateOnly(new Date());
+  const map: Record<string, { entries: Entry[] }> = {};
   for (const e of entries) {
     const d = new Date(e.timestamp);
     const key = d.toLocaleString(undefined, { month: "long", year: "numeric" });
-    map[key] ||= { entries: [], hasToday: false };
+    map[key] ||= { entries: [] };
     map[key].entries.push(e);
-    if (dateOnly(d) === today) map[key].hasToday = true;
   }
   return map;
-}
-function dateOnly(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

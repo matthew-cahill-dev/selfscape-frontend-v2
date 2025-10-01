@@ -1,4 +1,5 @@
 // selfscape-frontend-v2/src/app/api/auth/[...nextauth]/route.ts
+
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
@@ -12,13 +13,17 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, profile }) {
+    async jwt({ token, user, profile }) {
+      // ✅ make sure email is always present on the JWT payload
+      if (user?.email) token.email = user.email;
+      if (!token.email && profile && typeof (profile as any).email === "string") {
+        token.email = (profile as any).email;
+      }
       if (profile?.name) token.name = profile.name;
       if (profile && "picture" in profile) token.picture = (profile as any).picture;
       return token;
     },
     async session({ session, token }) {
-      // ✅ Safe assignment, avoids TS error "session.user is possibly undefined"
       session.user = {
         ...(session.user ?? {}),
         email: (token.email as string) ?? "",
@@ -32,3 +37,4 @@ export const authOptions: NextAuthOptions = {
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
+

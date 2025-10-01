@@ -83,3 +83,15 @@ export async function transcribeAudio(file: Blob) {
   if (!res.ok) throw new Error(`POST /transcribe ${res.status}`);
   return res.json() as Promise<{ transcript: string }>;
 }
+
+// new getEntry function
+// selfscape-frontend-v2/src/lib/api.ts (snippet)
+export async function getEntry(id: string, email?: string) {
+  if (!process.env.NEXT_PUBLIC_API_URL) throw new Error("NEXT_PUBLIC_API_URL not set");
+  const url = new URL(`${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}/entry/${encodeURIComponent(id)}`);
+  if (email) url.searchParams.set("user_email", email);
+  const res = await fetch(url.toString(), { method: "GET" });
+  if (!res.ok) throw new Error(`Failed to load entry (${res.status})`);
+  return (await res.json()) as any; // shape: Entry
+}
+

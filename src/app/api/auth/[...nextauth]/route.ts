@@ -1,7 +1,7 @@
 // selfscape-frontend-v2/src/app/api/auth/[...nextauth]/route.ts
-
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import jwt from "jsonwebtoken";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -14,7 +14,6 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, profile }) {
-      // ✅ make sure email is always present on the JWT payload
       if (user?.email) token.email = user.email;
       if (!token.email && profile && typeof (profile as any).email === "string") {
         token.email = (profile as any).email;
@@ -33,8 +32,23 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  jwt: {
+    encode: async ({ secret, token }) => {
+      if (!token) return "";
+      return jwt.sign(token, secret, { algorithm: "HS256" });
+    },
+    decode: async ({ secret, token }) => {
+      if (!token) return null;
+      try {
+        // try HS256 decode
+        return jwt.verify(token, secret, { algorithms: ["HS256"] }) as any;
+      } catch {
+        // fallback to NextAuth default decode
+        return null;
+      }
+    },
+  },
 };
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
-
